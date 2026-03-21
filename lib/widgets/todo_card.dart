@@ -114,7 +114,7 @@ class TodoCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                _formatTime(todo.elapsedSeconds),
+                                _formatTime(todo.remainingSeconds),
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: todo.isRunning
@@ -124,7 +124,7 @@ class TodoCard extends StatelessWidget {
                                 ),
                               ),
                               const Spacer(),
-                              if (todo.status != TodoStatus.done)
+                              if (todo.status != TodoStatus.done && todo.remainingSeconds > 0)
                                 todo.isRunning
                                     ? _TimerButton(
                                         icon: Icons.pause_rounded,

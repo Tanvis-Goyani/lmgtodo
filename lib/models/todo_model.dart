@@ -20,7 +20,7 @@ class Todo extends Equatable {
   final int statusIndex;
 
   @HiveField(4)
-  final int elapsedSeconds;
+  final int remainingSeconds;
 
   @HiveField(5)
   final bool isRunning;
@@ -30,7 +30,7 @@ class Todo extends Equatable {
     required this.title,
     required this.description,
     this.statusIndex = 0,
-    this.elapsedSeconds = 0,
+    this.remainingSeconds = 0,
     this.isRunning = false,
   });
 
@@ -41,7 +41,7 @@ class Todo extends Equatable {
     String? title,
     String? description,
     TodoStatus? status,
-    int? elapsedSeconds,
+    int? remainingSeconds,
     bool? isRunning,
   }) {
     return Todo(
@@ -49,7 +49,7 @@ class Todo extends Equatable {
       title: title ?? this.title,
       description: description ?? this.description,
       statusIndex: status != null ? status.index : statusIndex,
-      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       isRunning: isRunning ?? this.isRunning,
     );
   }
@@ -60,7 +60,7 @@ class Todo extends Equatable {
     title,
     description,
     statusIndex,
-    elapsedSeconds,
+    remainingSeconds,
     isRunning,
   ];
 }
