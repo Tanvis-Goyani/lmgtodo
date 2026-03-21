@@ -6,7 +6,8 @@ import 'package:lmgtodo/models/todo_model.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
 
 class TodoFormSheet extends StatefulWidget {
-  const TodoFormSheet({super.key});
+  final Todo? todo;
+  const TodoFormSheet({super.key, this.todo});
 
   @override
   State<TodoFormSheet> createState() => _TodoFormSheetState();
@@ -17,6 +18,17 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
   final _descController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   int _durationSeconds = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.todo != null) {
+      _titleController.text = widget.todo!.title;
+      _descController.text = widget.todo!.description;
+      _durationSeconds = widget.todo!.remainingSeconds.clamp(60, 300);
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -27,15 +39,24 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    final todo = Todo(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: _titleController.text.trim(),
-      description: _descController.text.trim(),
-      statusIndex: TodoStatus.todo.index,
-      remainingSeconds: _durationSeconds,
-    );
+    if (widget.todo != null) {
+      final updated = widget.todo!.copyWith(
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+        remainingSeconds: _durationSeconds,
+      );
+      context.read<TodoBloc>().add(UpdateTodo(updated));
+    } else {
+      final todo = Todo(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+        statusIndex: TodoStatus.todo.index,
+        remainingSeconds: _durationSeconds,
+      );
+      context.read<TodoBloc>().add(AddTodo(todo));
+    }
 
-    context.read<TodoBloc>().add(AddTodo(todo));
     Navigator.pop(context);
   }
 
@@ -75,8 +96,8 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
-              'New Todo',
+            Text(
+              widget.todo != null ? 'Edit Todo' : 'New Todo',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -87,7 +108,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
 
             TextFormField(
               controller: _titleController,
-              autofocus: true,
+              autofocus: widget.todo == null,
               decoration: InputDecoration(
                 labelText: 'Title',
                 hintText: 'e.g. Fix login bug',
@@ -199,21 +220,48 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
             ),
             const SizedBox(height: 24),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                if (widget.todo != null) ...[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      widget.todo != null ? 'Save' : 'Add Todo',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Add Todo',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
+              ],
             ),
           ],
         ),

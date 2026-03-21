@@ -107,6 +107,17 @@ class TodoListPage extends StatelessWidget {
 
                   onComplete: () =>
                       context.read<TodoBloc>().add(CompleteTodo(todo.id)),
+                  onEdit: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<TodoBloc>(),
+                        child: TodoFormSheet(todo: todo), // pass the todo
+                      ),
+                    );
+                  },
                 );
               },
             );
