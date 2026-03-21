@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
+import 'package:lmgtodo/models/todo_model.dart';
+import 'package:lmgtodo/repository/todo_repository.dart';
 import 'bloc/todo_bloc.dart';
 import 'bloc/todo_event.dart';
 import 'pages/todo_list_page.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(TodoAdapter());
+
+  final repo = TodoRepository();
+
+  await repo.init();
+  runApp(MyApp(repository: repo));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final TodoRepository repository;
+  const MyApp({super.key, required this.repository});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,7 +41,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: BlocProvider(
-        create: (_) => TodoBloc()..add(LoadTodos()),
+        create: (_) => TodoBloc(repository: repository)..add(LoadTodos()),
         child: const TodoListPage(),
       ),
     );

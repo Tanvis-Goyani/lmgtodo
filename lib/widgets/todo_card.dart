@@ -5,15 +5,25 @@ import 'package:lmgtodo/constants/app_colors.dart';
 class TodoCard extends StatelessWidget {
   final Todo todo;
   final VoidCallback onDelete;
+  final VoidCallback onStart;
+  final VoidCallback onPause;
+  final VoidCallback onComplete;
 
-  const TodoCard({super.key, required this.todo, required this.onDelete});
+  const TodoCard({
+    super.key,
+    required this.todo,
+    required this.onDelete,
+    required this.onStart,
+    required this.onPause,
+    required this.onComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final statusColor = switch (todo.status) {
       TodoStatus.todo => AppColors.statusTodo,
       TodoStatus.inProgress => AppColors.statusInProgress,
-      TodoStatus.done => AppColors.statusDone, // Emerald green
+      TodoStatus.done => AppColors.statusDone,
     };
 
     return Container(
@@ -34,14 +44,11 @@ class TodoCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {
-              // Tap behavior here
-            },
+            onTap: () {},
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Colored left border indicating status
                   Container(width: 5, color: statusColor),
                   Expanded(
                     child: Padding(
@@ -97,18 +104,49 @@ class TodoCard extends StatelessWidget {
                           Row(
                             children: [
                               Icon(
-                                Icons.timer_outlined,
+                                todo.isRunning
+                                    ? Icons.timer_rounded
+                                    : Icons.timer_outlined,
                                 size: 16,
-                                color: AppColors.textTertiary,
+                                color: todo.isRunning
+                                    ? AppColors.statusInProgress
+                                    : AppColors.textTertiary,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 _formatTime(todo.elapsedSeconds),
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
+                                  color: todo.isRunning
+                                      ? AppColors.statusInProgress
+                                      : AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
                                 ),
+                              ),
+                              const Spacer(),
+                              if (todo.status != TodoStatus.done)
+                                todo.isRunning
+                                    ? _TimerButton(
+                                        icon: Icons.pause_rounded,
+                                        label: 'Pause',
+                                        color: AppColors.statusInProgress,
+                                        onTap: onPause,
+                                      )
+                                    : _TimerButton(
+                                        icon: Icons.play_arrow_rounded,
+                                        label: todo.status == TodoStatus.todo
+                                            ? 'Start'
+                                            : 'Resume',
+                                        color: AppColors.statusDone,
+                                        onTap: onStart,
+                                      ),
+                              const SizedBox(width: 8),
+
+                              _TimerButton(
+                                icon: Icons.check_rounded,
+                                label: 'Done',
+                                color: Colors.green,
+                                onTap: onComplete,
                               ),
                             ],
                           ),
@@ -161,6 +199,50 @@ class _StatusChip extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: statusColor,
           letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _TimerButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _TimerButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withAlpha(25),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withAlpha(80)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
