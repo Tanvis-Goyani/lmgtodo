@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../models/todo_model.dart';
-import '../repository/todo_repository.dart';
+import 'package:lmgtodo/models/todo_model.dart';
+import 'package:lmgtodo/repository/todo_repository.dart';
 import 'todo_event.dart';
 import 'todo_state.dart';
 
@@ -25,7 +25,6 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     final todos = repository.getAll();
     emit(TodoLoaded(todos));
 
-    // Resume ticker if any todos were running when app was closed
     final anyRunning = todos.any((t) => t.isRunning);
     if (anyRunning) _startGlobalTicker();
   }
@@ -84,21 +83,34 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
   Future<void> _onTickTimers(TickTimers event, Emitter<TodoState> emit) async {
     if (state is TodoLoaded) {
+      bool reachedZero = false;
       final updated = (state as TodoLoaded).todos.map((t) {
-        if (t.isRunning)
-          return t.copyWith(elapsedSeconds: t.elapsedSeconds + 1);
+        if (t.isRunning) {
+          final newTime = t.remainingSeconds - 1;
+          if (newTime <= 0) {
+            reachedZero = true;
+            return t.copyWith(
+              remainingSeconds: 0,
+              isRunning: false,
+              status: TodoStatus.done,
+            );
+          }
+          return t.copyWith(remainingSeconds: newTime);
+        }
         return t;
       }).toList();
 
       emit(TodoLoaded(updated));
 
-      // Persist to Hive every 10 seconds, not every tick
       _tickCount++;
-      if (_tickCount % 10 == 0) {
-        for (final t in updated.where((t) => t.isRunning)) {
-          await repository.update(t);
+      if (_tickCount % 10 == 0 || reachedZero) {
+        for (final t in updated) {
+          if (t.status != TodoStatus.todo) await repository.update(t);
         }
       }
+
+      final anyRunning = updated.any((t) => t.isRunning);
+      if (!anyRunning) _ticker?.cancel();
     }
   }
 

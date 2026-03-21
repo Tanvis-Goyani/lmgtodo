@@ -21,7 +21,7 @@ class TodoAdapter extends TypeAdapter<Todo> {
       title: fields[1] as String,
       description: fields[2] as String,
       statusIndex: fields[3] as int,
-      elapsedSeconds: fields[4] as int,
+      remainingSeconds: fields[4] as int,
       isRunning: fields[5] as bool,
     );
   }
@@ -39,7 +39,7 @@ class TodoAdapter extends TypeAdapter<Todo> {
       ..writeByte(3)
       ..write(obj.statusIndex)
       ..writeByte(4)
-      ..write(obj.elapsedSeconds)
+      ..write(obj.remainingSeconds)
       ..writeByte(5)
       ..write(obj.isRunning);
   }
