@@ -15,6 +15,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<LoadTodos>(_onLoadTodos);
     on<AddTodo>(_onAddTodo);
     on<DeleteTodo>(_onDeleteTodo);
+    on<UpdateTodo>(_onUpdateTodo);
     on<StartTimer>(_onStartTimer);
     on<PauseTimer>(_onPauseTimer);
     on<TickTimers>(_onTickTimers);
@@ -34,6 +35,16 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     if (state is TodoLoaded) {
       final current = (state as TodoLoaded).todos;
       emit(TodoLoaded([...current, event.todo]));
+    }
+  }
+
+  Future<void> _onUpdateTodo(UpdateTodo event, Emitter<TodoState> emit) async {
+    await repository.update(event.todo);
+    if (state is TodoLoaded) {
+      final updated = (state as TodoLoaded).todos.map((t) {
+        return t.id == event.todo.id ? event.todo : t;
+      }).toList();
+      emit(TodoLoaded(updated));
     }
   }
 

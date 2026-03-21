@@ -8,10 +8,12 @@ class TodoCard extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onPause;
   final VoidCallback onComplete;
+  final VoidCallback onEdit;
 
   const TodoCard({
     super.key,
     required this.todo,
+    required this.onEdit,
     required this.onDelete,
     required this.onStart,
     required this.onPause,
@@ -44,7 +46,7 @@ class TodoCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {},
+            onTap: onEdit,
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,7 +126,8 @@ class TodoCard extends StatelessWidget {
                                 ),
                               ),
                               const Spacer(),
-                              if (todo.status != TodoStatus.done && todo.remainingSeconds > 0)
+                              if (todo.status != TodoStatus.done &&
+                                  todo.remainingSeconds > 0)
                                 todo.isRunning
                                     ? _TimerButton(
                                         icon: Icons.pause_rounded,
