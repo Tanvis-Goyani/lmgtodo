@@ -77,6 +77,22 @@ class TodoCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               GestureDetector(
+                                onTap: onEdit,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withAlpha(20),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit_outlined,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
                                 onTap: onDelete,
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
