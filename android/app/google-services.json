@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "51443322991",
+    "project_id": "lmgtask-ac5ab",
+    "storage_bucket": "lmgtask-ac5ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51443322991:android:28a51eccca9ec3e88bbd9a",
+        "android_client_info": {
+          "package_name": "com.example.lmgtodo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtpIw5Ieg8udiGsCZ3joRAZHTzSI-_l5g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
