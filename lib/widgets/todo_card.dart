@@ -64,7 +64,7 @@ class TodoCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   todo.title,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,

@@ -31,31 +31,51 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     if (anyRunning) _startGlobalTicker();
   }
 
-  Future<void> _onAddTodo(AddTodo event, Emitter<TodoState> emit) async {
-    await repository.add(event.todo);
+  void _emitError(Emitter<TodoState> emit, Object error) {
     if (state is TodoLoaded) {
-      final current = (state as TodoLoaded).todos;
-      emit(TodoLoaded([...current, event.todo]));
+      final todos = (state as TodoLoaded).todos;
+      emit(TodoError(error.toString(), todos));
+      emit(TodoLoaded(todos));
+    }
+  }
+
+  Future<void> _onAddTodo(AddTodo event, Emitter<TodoState> emit) async {
+    try {
+      await repository.add(event.todo);
+      if (state is TodoLoaded) {
+        final current = (state as TodoLoaded).todos;
+        emit(TodoLoaded([...current, event.todo]));
+      }
+    } catch (e) {
+      _emitError(emit, e);
     }
   }
 
   Future<void> _onUpdateTodo(UpdateTodo event, Emitter<TodoState> emit) async {
-    await repository.update(event.todo);
-    if (state is TodoLoaded) {
-      final updated = (state as TodoLoaded).todos.map((t) {
-        return t.id == event.todo.id ? event.todo : t;
-      }).toList();
-      emit(TodoLoaded(updated));
+    try {
+      await repository.update(event.todo);
+      if (state is TodoLoaded) {
+        final updated = (state as TodoLoaded).todos.map((t) {
+          return t.id == event.todo.id ? event.todo : t;
+        }).toList();
+        emit(TodoLoaded(updated));
+      }
+    } catch (e) {
+      _emitError(emit, e);
     }
   }
 
   Future<void> _onDeleteTodo(DeleteTodo event, Emitter<TodoState> emit) async {
-    await repository.delete(event.id);
-    if (state is TodoLoaded) {
-      final updated = (state as TodoLoaded).todos
-          .where((t) => t.id != event.id)
-          .toList();
-      emit(TodoLoaded(updated));
+    try {
+      await repository.delete(event.id);
+      if (state is TodoLoaded) {
+        final updated = (state as TodoLoaded).todos
+            .where((t) => t.id != event.id)
+            .toList();
+        emit(TodoLoaded(updated));
+      }
+    } catch (e) {
+      _emitError(emit, e);
     }
   }
 
@@ -121,20 +141,24 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
       emit(TodoLoaded(updated));
 
-      _tickCount++;
-      if (_tickCount % 10 == 0 || reachedZero) {
-        for (final t in updated) {
-          if (t.status != TodoStatus.todo) await repository.update(t);
+      try {
+        _tickCount++;
+        if (_tickCount % 10 == 0 || reachedZero) {
+          for (final t in updated) {
+            if (t.status != TodoStatus.todo) await repository.update(t);
+          }
         }
-      }
-      if (reachedZero) {
-        final incompleteTasks = updated.where(
-          (t) => t.status == TodoStatus.incomplete && t.remainingSeconds == 0,
-        );
-        for (final t in incompleteTasks) {
-          await repository.update(t);
-          await NotificationService.instance.showTimerExpired(t.title);
+        if (reachedZero) {
+          final incompleteTasks = updated.where(
+            (t) => t.status == TodoStatus.incomplete && t.remainingSeconds == 0,
+          );
+          for (final t in incompleteTasks) {
+            await repository.update(t);
+            await NotificationService.instance.showTimerExpired(t.title);
+          }
         }
+      } catch (e) {
+        _emitError(emit, e);
       }
 
       final anyRunning = updated.any((t) => t.isRunning);

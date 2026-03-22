@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lmgtodo/bloc/todo_bloc.dart';
-import 'package:lmgtodo/bloc/todo_event.dart';
+import 'package:lmgtodo/bloc/todo/todo_bloc.dart';
+import 'package:lmgtodo/bloc/todo/todo_event.dart';
 import 'package:lmgtodo/models/todo_model.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
 
@@ -140,7 +140,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Time limit',
                   style: TextStyle(
                     fontSize: 15,
@@ -230,7 +230,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Cancel',
                         style: TextStyle(
                           fontSize: 16,
@@ -252,7 +252,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
                     ),
                     child: Text(
                       widget.todo != null ? 'Save' : 'Add Todo',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

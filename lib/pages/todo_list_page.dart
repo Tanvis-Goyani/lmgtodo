@@ -1,8 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lmgtodo/bloc/todo_bloc.dart';
-import 'package:lmgtodo/bloc/todo_event.dart';
-import 'package:lmgtodo/bloc/todo_state.dart';
+import 'package:lmgtodo/bloc/auth/auth_bloc.dart';
+import 'package:lmgtodo/bloc/auth/auth_event.dart';
+import 'package:lmgtodo/bloc/todo/todo_bloc.dart';
+import 'package:lmgtodo/bloc/todo/todo_event.dart';
+import 'package:lmgtodo/bloc/todo/todo_state.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lmgtodo/pages/todo_form_sheet.dart';
 import 'package:lmgtodo/widgets/todo_card.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
@@ -25,6 +29,13 @@ class _TodoListPageState extends State<TodoListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final String rawName = user?.displayName?.trim() ?? '';
+    final String rawEmail = user?.email ?? '';
+    final displayName = rawName.isNotEmpty
+        ? rawName
+        : (rawEmail.isNotEmpty ? rawEmail.split('@')[0] : '');
+
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 90,
@@ -34,16 +45,31 @@ class _TodoListPageState extends State<TodoListPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                'Welcome back,',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+              RichText(
+                text: TextSpan(
+                  text: 'Welcome back',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  children: [
+                    if (displayName.isNotEmpty) ...[
+                      const TextSpan(text: ', '),
+                      TextSpan(
+                        text: displayName,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ] else
+                      const TextSpan(text: ','),
+                  ],
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
+              Text(
                 'My Tasks',
                 style: TextStyle(
                   fontSize: 28,
@@ -55,8 +81,31 @@ class _TodoListPageState extends State<TodoListPage> {
             ],
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              color: AppColors.textSecondary,
+              tooltip: 'Logout',
+              onPressed: () {
+                context.read<AuthBloc>().add(AuthLogoutRequested());
+              },
+            ),
+          ),
+        ],
       ),
-      body: BlocBuilder<TodoBloc, TodoState>(
+      body: BlocConsumer<TodoBloc, TodoState>(
+        listener: (context, state) {
+          if (state is TodoError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.destructive,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is TodoLoaded) {
             final filteredTodos = _searchQuery.isEmpty
@@ -91,7 +140,7 @@ class _TodoListPageState extends State<TodoListPage> {
                         _searchQuery = val;
                       });
                     },
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w500,
@@ -181,7 +230,7 @@ class _TodoListPageState extends State<TodoListPage> {
                                 _searchQuery.isNotEmpty
                                     ? 'No results found'
                                     : 'All caught up!',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -209,31 +258,38 @@ class _TodoListPageState extends State<TodoListPage> {
                           itemBuilder: (context, index) {
                             final todo = filteredTodos[index];
                             return TodoCard(
-                              todo: todo,
-                              onDelete: () => context.read<TodoBloc>().add(
-                                DeleteTodo(todo.id),
-                              ),
-                              onStart: () => context.read<TodoBloc>().add(
-                                StartTimer(todo.id),
-                              ),
-                              onPause: () => context.read<TodoBloc>().add(
-                                PauseTimer(todo.id),
-                              ),
-                              onComplete: () => context.read<TodoBloc>().add(
-                                CompleteTodo(todo.id),
-                              ),
-                              onEdit: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => BlocProvider.value(
-                                    value: context.read<TodoBloc>(),
-                                    child: TodoFormSheet(todo: todo),
+                                  todo: todo,
+                                  onDelete: () => context.read<TodoBloc>().add(
+                                    DeleteTodo(todo.id),
                                   ),
+                                  onStart: () => context.read<TodoBloc>().add(
+                                    StartTimer(todo.id),
+                                  ),
+                                  onPause: () => context.read<TodoBloc>().add(
+                                    PauseTimer(todo.id),
+                                  ),
+                                  onComplete: () => context
+                                      .read<TodoBloc>()
+                                      .add(CompleteTodo(todo.id)),
+                                  onEdit: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) => BlocProvider.value(
+                                        value: context.read<TodoBloc>(),
+                                        child: TodoFormSheet(todo: todo),
+                                      ),
+                                    );
+                                  },
+                                )
+                                .animate(delay: (index * 50).ms)
+                                .fade(duration: 400.ms, curve: Curves.easeOut)
+                                .slideY(
+                                  begin: 0.1,
+                                  duration: 400.ms,
+                                  curve: Curves.easeOut,
                                 );
-                              },
-                            );
                           },
                         ),
                 ),
@@ -261,7 +317,7 @@ class _TodoListPageState extends State<TodoListPage> {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text(
+        label: Text(
           'New Task',
           style: TextStyle(
             fontWeight: FontWeight.w600,
