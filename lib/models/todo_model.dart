@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 part 'todo_model.g.dart';
 
-enum TodoStatus { todo, inProgress, done }
+enum TodoStatus { todo, inProgress, done, incomplete }
 
 @HiveType(typeId: 0)
 class Todo extends Equatable {
