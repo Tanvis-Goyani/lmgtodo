@@ -7,8 +7,21 @@ import 'package:lmgtodo/pages/todo_form_sheet.dart';
 import 'package:lmgtodo/widgets/todo_card.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
 
-class TodoListPage extends StatelessWidget {
+class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
+
+  @override
+  State<TodoListPage> createState() => _TodoListPageState();
+}
+
+class _TodoListPageState extends State<TodoListPage> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,80 +59,185 @@ class TodoListPage extends StatelessWidget {
       body: BlocBuilder<TodoBloc, TodoState>(
         builder: (context, state) {
           if (state is TodoLoaded) {
-            if (state.todos.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withAlpha(128),
-                        shape: BoxShape.circle,
+            final filteredTodos = _searchQuery.isEmpty
+                ? state.todos
+                : state.todos.where((todo) {
+                    final q = _searchQuery.toLowerCase();
+                    return todo.title.toLowerCase().contains(q) ||
+                        todo.description.toLowerCase().contains(q);
+                  }).toList();
+            return Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowColor.withAlpha(8),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      child: Icon(
-                        Icons.check_circle_outline_rounded,
-                        size: 72,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
+                    },
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'All caught up!',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'You have no pending tasks.\nTap the + button to add one.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
+                    decoration: InputDecoration(
+                      hintText: 'Search tasks...',
+                      hintStyle: TextStyle(
+                        color: AppColors.textTertiary,
                         fontSize: 15,
-                        color: AppColors.textSecondary,
-                        height: 1.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 22,
+                      ),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                });
+                              },
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: AppColors.textTertiary,
+                                size: 20,
+                              ),
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withAlpha(70),
+                          width: 1.5,
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.only(top: 8, bottom: 100),
-              itemCount: state.todos.length,
-              itemBuilder: (context, index) {
-                final todo = state.todos[index];
-                return TodoCard(
-                  todo: todo,
-                  onDelete: () =>
-                      context.read<TodoBloc>().add(DeleteTodo(todo.id)),
-
-                  onStart: () =>
-                      context.read<TodoBloc>().add(StartTimer(todo.id)),
-
-                  onPause: () =>
-                      context.read<TodoBloc>().add(PauseTimer(todo.id)),
-
-                  onComplete: () =>
-                      context.read<TodoBloc>().add(CompleteTodo(todo.id)),
-                  onEdit: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => BlocProvider.value(
-                        value: context.read<TodoBloc>(),
-                        child: TodoFormSheet(todo: todo), // pass the todo
+                if (_searchQuery.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 16, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '${filteredTodos.length} results',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    );
-                  },
-                );
-              },
+                    ),
+                  ),
+                Expanded(
+                  child: filteredTodos.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _searchQuery.isNotEmpty
+                                    ? Icons.search_off_rounded
+                                    : Icons.check_circle_outline_rounded,
+                                size: 72,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'No results found'
+                                    : 'All caught up!',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'Try a different keyword'
+                                    : 'You have no pending tasks.\nTap the + button to add one.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(top: 8, bottom: 100),
+                          itemCount: filteredTodos.length,
+                          itemBuilder: (context, index) {
+                            final todo = filteredTodos[index];
+                            return TodoCard(
+                              todo: todo,
+                              onDelete: () => context.read<TodoBloc>().add(
+                                DeleteTodo(todo.id),
+                              ),
+                              onStart: () => context.read<TodoBloc>().add(
+                                StartTimer(todo.id),
+                              ),
+                              onPause: () => context.read<TodoBloc>().add(
+                                PauseTimer(todo.id),
+                              ),
+                              onComplete: () => context.read<TodoBloc>().add(
+                                CompleteTodo(todo.id),
+                              ),
+                              onEdit: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (_) => BlocProvider.value(
+                                    value: context.read<TodoBloc>(),
+                                    child: TodoFormSheet(todo: todo),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
             );
           }
           return const Center(child: CircularProgressIndicator());
