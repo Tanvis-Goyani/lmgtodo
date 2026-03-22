@@ -154,9 +154,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withAlpha(26),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
