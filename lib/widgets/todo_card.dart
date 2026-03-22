@@ -26,6 +26,7 @@ class TodoCard extends StatelessWidget {
       TodoStatus.todo => AppColors.statusTodo,
       TodoStatus.inProgress => AppColors.statusInProgress,
       TodoStatus.done => AppColors.statusDone,
+      TodoStatus.incomplete => Colors.orange,
     };
 
     return Container(
@@ -143,6 +144,7 @@ class TodoCard extends StatelessWidget {
                               ),
                               const Spacer(),
                               if (todo.status != TodoStatus.done &&
+                                  todo.status != TodoStatus.incomplete &&
                                   todo.remainingSeconds > 0)
                                 todo.isRunning
                                     ? _TimerButton(
@@ -202,6 +204,7 @@ class _StatusChip extends StatelessWidget {
       TodoStatus.todo => 'TODO',
       TodoStatus.inProgress => 'In Progress',
       TodoStatus.done => 'Done',
+      TodoStatus.incomplete => 'Timeout',
     };
 
     return Container(

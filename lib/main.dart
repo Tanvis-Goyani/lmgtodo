@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lmgtodo/constants/app_colors.dart';
 import 'package:lmgtodo/models/todo_model.dart';
 import 'package:lmgtodo/repository/todo_repository.dart';
+import 'package:lmgtodo/services/notification_service.dart';
 import 'bloc/todo_bloc.dart';
 import 'bloc/todo_event.dart';
 import 'pages/todo_list_page.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
   final repo = TodoRepository();
 
   await repo.init();
+  await NotificationService.instance.init();
   runApp(MyApp(repository: repo));
 }
 
