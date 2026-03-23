@@ -17,7 +17,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  int _durationSeconds = 60;
+  int _durationSeconds = 30;
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
     if (widget.todo != null) {
       _titleController.text = widget.todo!.title;
       _descController.text = widget.todo!.description;
-      _durationSeconds = widget.todo!.remainingSeconds.clamp(60, 300);
+      _durationSeconds = widget.todo!.remainingSeconds.clamp(30, 300);
     }
   }
 
@@ -171,9 +171,9 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
             const SizedBox(height: 8),
             Slider(
               value: _durationSeconds.toDouble(),
-              min: 60,
+              min: 30,
               max: 300,
-              divisions: 8,
+              divisions: 9,
               label: _formatSeconds(_durationSeconds),
               activeColor: Theme.of(context).colorScheme.primary,
               onChanged: (val) =>
@@ -183,34 +183,38 @@ class _TodoFormSheetState extends State<TodoFormSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(5, (i) {
-                  final minutes = i + 1;
-                  final seconds = minutes * 60;
-                  final isSelected =
-                      _durationSeconds >= seconds &&
-                      (i == 4 || _durationSeconds < (minutes + 1) * 60);
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: List.generate(10, (i) {
+                  final seconds = 30 + (i * 30);
+                  final isSelected = _durationSeconds >= seconds;
+                  final isLabel = seconds == 30 || seconds % 60 == 0;
+                  final label = seconds == 30 ? '30s' : '${seconds ~/ 60}m';
+
                   return Column(
                     children: [
                       Container(
                         width: 1.5,
-                        height: 8,
+                        height: isLabel ? 8 : 5,
                         color: isSelected
                             ? Theme.of(context).colorScheme.primary
                             : AppColors.textTertiary.withAlpha(100),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        '${minutes}m',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
+                      if (isLabel)
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : AppColors.textSecondary,
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 16),
                     ],
                   );
                 }),
